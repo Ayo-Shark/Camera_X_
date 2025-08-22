@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+  <androidx.camera.view.PreviewView
+      android:id="@+id/viewFinder"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent" />
+
+  <ImageButton
+      android:id="@+id/openGallery"
+      android:layout_width="70dp"
+      android:layout_height="62dp"
+      android:background="@drawable/button_background"
+      android:contentDescription="Open gallery"
+      android:src="@drawable/ic_open_gallery"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.184"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintVertical_bias="0.938" />
+
+  <ImageButton
+      android:id="@+id/takePhoto"
+      android:layout_width="70dp"
+      android:layout_height="62dp"
+      android:src="@drawable/ic_take_photo"
+      android:background="@drawable/button_background"
+      android:contentDescription="Take photo"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.498"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintVertical_bias="0.94" />
+
+  <ImageButton
+      android:id="@+id/takeVideo"
+      android:layout_width="70dp"
+      android:layout_height="62dp"
+      android:src="@drawable/ic_started_video"
+      android:background="@drawable/button_background"
+      android:contentDescription="Capture Video"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.818"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintVertical_bias="0.94" />
+
+  <ImageButton
+      android:id="@+id/switchCamera"
+      android:layout_width="57dp"
+      android:layout_height="48dp"
+      android:background="@drawable/button_background"
+      android:contentDescription="Switch Camera"
+      android:src="@drawable/ic_switch_camera"
+      app:tint="@android:color/white"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.898"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintVertical_bias="0.058" />
+</androidx.constraintlayout.widget.ConstraintLayout>
