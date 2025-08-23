@@ -8,10 +8,14 @@ import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.MediaStoreOutputOptions
@@ -24,6 +28,11 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.example.camera_x.databinding.ActivityMainBinding
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.FaceDetection
+import com.google.mlkit.vision.face.FaceDetector
+import com.google.mlkit.vision.face.FaceDetectorOptions
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
@@ -36,6 +45,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private var switchCamera : CameraSelector? = null
     private var currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private lateinit var faceDetector: FaceDetector
+
 
 
 
@@ -44,24 +55,21 @@ class MainActivity : AppCompatActivity() {
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 
+
         if (allPermissionsGranted()) {
             startCamera()
         } else {
             requestPermissions()
         }
 
-
-
         viewBinding.takePhoto.setOnClickListener { takePhoto() }
         viewBinding.takeVideo.setOnClickListener { captureVideo() }
         viewBinding.switchCamera.setOnClickListener { switchCamera() }
 
 
-
-
-
     }
 
+    @OptIn(ExperimentalGetImage::class)
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
@@ -73,6 +81,50 @@ class MainActivity : AppCompatActivity() {
                 .also {
                     it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
                 }
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+
+            val options = FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .build()
+
+            faceDetector = FaceDetection.getClient(options)
+
+            imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this)) {imageProxy ->
+                val mediaImage = imageProxy.image
+                if (mediaImage != null) {
+                    val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
+                    faceDetector.process(inputImage)
+                        .addOnSuccessListener { faces ->
+                            viewBinding.viewFinder.overlay.clear()
+
+                            if (faces.isNotEmpty()) {
+                                for (face in faces) {
+                                    Log.d(TAG, "Face bounds: ${face.boundingBox}")
+
+                                    val vm = FaceViewModel(face)
+                                    val drawable = FaceDrawable(vm)
+                                    viewBinding.viewFinder.overlay.add(drawable)
+
+                                }
+
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "Face detection failed", e)
+                        }
+                        .addOnCompleteListener {
+                            imageProxy.close()
+                        }
+                } else {
+                    imageProxy.close()
+                }
+            }
+
 
             photoTake = ImageCapture.Builder().build()
             val recorder = Recorder.Builder()
@@ -82,11 +134,10 @@ class MainActivity : AppCompatActivity() {
 
             val cameraSelector = currentCameraSelector
 
-
             try {
                 cameraProvider.unbindAll()
                 cameraProvider
-                    .bindToLifecycle(this, cameraSelector, preview, videoCapture, photoTake)
+                    .bindToLifecycle(this, cameraSelector, preview, videoCapture, photoTake, imageAnalysis,)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
@@ -253,6 +304,8 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
+
+
 
 
 
