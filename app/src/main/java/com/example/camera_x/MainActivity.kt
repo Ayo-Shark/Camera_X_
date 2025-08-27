@@ -29,6 +29,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.example.camera_x.databinding.ActivityMainBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
+
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
@@ -36,24 +37,24 @@ import com.google.mlkit.vision.face.FaceDetectorOptions
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
     private var viewBinding: ActivityMainBinding? = null
     private var photoTake: ImageCapture? = null
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
-    private lateinit var cameraExecutor: ExecutorService
+    private var cameraExecutor: ExecutorService? = null
     private var switchCamera : CameraSelector? = null
     private var currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     private lateinit var faceDetector: FaceDetector
-
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding?.root)
+        cameraExecutor = Executors.newSingleThreadExecutor()
 
 
         if (allPermissionsGranted()) {
@@ -270,7 +271,8 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         viewBinding = null
-        cameraExecutor.shutdown()
+        cameraExecutor?.shutdown()
+        cameraExecutor = null
     }
 
     companion object {

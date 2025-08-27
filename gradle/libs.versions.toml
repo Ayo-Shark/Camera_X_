@@ -17,6 +17,7 @@ constraintlayout = "2.2.1"
 materialVersion = "1.11.0"
 tensorflowLite = "2.17.0"
 tensorflowLiteSupport = "0.5.0"
+firebaseFirestoreKtx = "26.0.0"
 
 [libraries]
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
@@ -42,6 +43,7 @@ material-v1110 = { module = "com.google.android.material:material", version.ref 
 tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version.ref = "tensorflowLite" }
 tensorflow-lite-metadata = { module = "org.tensorflow:tensorflow-lite-metadata", version.ref = "tensorflowLiteSupport" }
 tensorflow-lite-support = { module = "org.tensorflow:tensorflow-lite-support", version.ref = "tensorflowLiteSupport" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
