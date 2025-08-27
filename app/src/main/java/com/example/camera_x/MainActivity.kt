@@ -38,7 +38,7 @@ import java.util.Locale
 import java.util.concurrent.ExecutorService
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var viewBinding: ActivityMainBinding
+    private var viewBinding: ActivityMainBinding? = null
     private var photoTake: ImageCapture? = null
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(viewBinding.root)
+        setContentView(viewBinding?.root)
 
 
         if (allPermissionsGranted()) {
@@ -62,9 +62,9 @@ class MainActivity : AppCompatActivity() {
             requestPermissions()
         }
 
-        viewBinding.takePhoto.setOnClickListener { takePhoto() }
-        viewBinding.takeVideo.setOnClickListener { captureVideo() }
-        viewBinding.switchCamera.setOnClickListener { switchCamera() }
+        viewBinding?.takePhoto?.setOnClickListener { takePhoto() }
+        viewBinding?.takeVideo?.setOnClickListener { captureVideo() }
+        viewBinding?.switchCamera?.setOnClickListener { switchCamera() }
 
 
     }
@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
             val preview = Preview.Builder()
                 .build()
                 .also {
-                    it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
+                    it.setSurfaceProvider(viewBinding?.viewFinder?.surfaceProvider)
                 }
             val imageAnalysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -100,7 +100,7 @@ class MainActivity : AppCompatActivity() {
 
                     faceDetector.process(inputImage)
                         .addOnSuccessListener { faces ->
-                            viewBinding.viewFinder.overlay.clear()
+                            viewBinding?.viewFinder?.overlay?.clear()
 
                             if (faces.isNotEmpty()) {
                                 for (face in faces) {
@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity() {
 
                                     val vm = FaceViewModel(face)
                                     val drawable = FaceDrawable(vm)
-                                    viewBinding.viewFinder.overlay.add(drawable)
+                                    viewBinding?.viewFinder?.overlay?.add(drawable)
 
                                 }
 
@@ -137,7 +137,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 cameraProvider.unbindAll()
                 cameraProvider
-                    .bindToLifecycle(this, cameraSelector, preview, videoCapture, photoTake, imageAnalysis,)
+                    .bindToLifecycle(this, cameraSelector, preview, videoCapture, photoTake, imageAnalysis)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity() {
     private fun captureVideo() {
         val videoCapture = this.videoCapture ?: return
 
-        viewBinding.takeVideo.isEnabled = false
+        viewBinding?.takeVideo?.isEnabled = false
 
         val curRecording = recording
         if (curRecording != null) {
@@ -218,7 +218,7 @@ class MainActivity : AppCompatActivity() {
             .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
                 when(recordEvent) {
                     is VideoRecordEvent.Start -> {
-                        viewBinding.takeVideo.apply {
+                        viewBinding?.takeVideo?.apply {
                             setImageResource(R.drawable.ic_switch_capture_video)
                             isEnabled = true
                         }
@@ -232,12 +232,12 @@ class MainActivity : AppCompatActivity() {
                                 .show()
                             Log.d(TAG, msg)
                         } else {
-                            recording?.close()
+                             recording?.close()
                             recording = null
                             Log.e(TAG, "Video capture ends with error: " +
                                     "${recordEvent.error}")
                         }
-                        viewBinding.takeVideo.apply {
+                        viewBinding?.takeVideo?.apply {
                             setImageResource(R.drawable.ic_started_video)
                             isEnabled = true
                         }
@@ -269,6 +269,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        viewBinding = null
         cameraExecutor.shutdown()
     }
 
