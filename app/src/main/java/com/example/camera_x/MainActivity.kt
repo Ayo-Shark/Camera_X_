@@ -1,13 +1,17 @@
 package com.example.camera_x
 
+import android.annotation.SuppressLint
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -27,7 +31,9 @@ import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
+import androidx.recyclerview.widget.GridLayoutManager
 import com.example.camera_x.databinding.ActivityMainBinding
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 import com.google.mlkit.vision.common.InputImage
@@ -48,6 +54,9 @@ class MainActivity : AppCompatActivity() {
     private var switchCamera : CameraSelector? = null
     private var currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     private lateinit var faceDetector: FaceDetector
+    private val viewModel: MainViewModel by viewModels()
+    private lateinit var photosAdapter: PhotosAdapter
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,10 +64,29 @@ class MainActivity : AppCompatActivity() {
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding?.root)
         cameraExecutor = Executors.newSingleThreadExecutor()
+        photosAdapter = PhotosAdapter(viewModel.photoUris)
+        viewBinding?.recyclerPhotos?.adapter = photosAdapter
+        viewBinding?.recyclerPhotos?.layoutManager = GridLayoutManager(this, 2)
+        val bottomSheetBehavior = BottomSheetBehavior.from(viewBinding?.bottomSheet!!)
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
+        viewBinding?.openGallery?.setOnClickListener {
+            if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            } else {
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            }
+        }
+
+        viewBinding?.main?.setOnClickListener {
+            if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            }
+        }
 
         if (allPermissionsGranted()) {
             startCamera()
+            loadExistingPhotos()
         } else {
             requestPermissions()
         }
@@ -175,7 +203,17 @@ class MainActivity : AppCompatActivity() {
                     val msg = "Photo capture succeeded: ${output.savedUri}"
                     Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                     Log.d(TAG, msg)
+
+                    output.savedUri?.let { uri ->
+                        viewModel.photoUris.add(0, uri)
+                        photosAdapter.notifyItemInserted(0)
+                    }
+
+
                 }
+
+
+
 
             }
         )
@@ -307,6 +345,32 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun loadExistingPhotos() {
+        val projection = arrayOf(MediaStore.Images.Media._ID, MediaStore.Images.Media.DATE_TAKEN)
+        val sortOrder = "${MediaStore.Images.Media.DATE_TAKEN} DESC"
+
+        contentResolver.query(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            projection,
+            null,
+            null,
+            sortOrder
+        )?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+            viewModel.photoUris.clear()
+            while (cursor.moveToNext()) {
+                val id = cursor.getLong(idColumn)
+                val contentUri = ContentUris.withAppendedId(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    id
+                )
+                viewModel.photoUris.add(contentUri)
+            }
+            photosAdapter.notifyDataSetChanged()
+        }
+    }
 
 
 
