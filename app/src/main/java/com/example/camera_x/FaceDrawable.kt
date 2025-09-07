@@ -12,7 +12,7 @@ class FaceDrawable(private val faceViewModel: FaceViewModel) : Drawable() {
     private val paint = Paint().apply {
         style = Paint.Style.STROKE
         color = Color.GREEN
-        strokeWidth = 5f
+        strokeWidth = 10f
         alpha = 200
     }
 
@@ -45,5 +45,6 @@ class FaceDrawable(private val faceViewModel: FaceViewModel) : Drawable() {
         textPaint.colorFilter = colorFilter
     }
 
+    @Deprecated("Deprecated in Java")
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 }

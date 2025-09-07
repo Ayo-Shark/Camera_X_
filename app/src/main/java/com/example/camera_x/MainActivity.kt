@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.graphics.Matrix
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -29,6 +31,8 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
+import androidx.camera.view.TransformExperimental
+
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.recyclerview.widget.GridLayoutManager
@@ -44,6 +48,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
     private var viewBinding: ActivityMainBinding? = null
@@ -98,7 +103,9 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    @SuppressLint("RestrictedApi")
     @OptIn(ExperimentalGetImage::class)
+
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
@@ -118,10 +125,10 @@ class MainActivity : AppCompatActivity() {
                 .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
                 .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
                 .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
                 .build()
 
             faceDetector = FaceDetection.getClient(options)
-
             imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this)) {imageProxy ->
                 val mediaImage = imageProxy.image
                 if (mediaImage != null) {
@@ -133,14 +140,13 @@ class MainActivity : AppCompatActivity() {
 
                             if (faces.isNotEmpty()) {
                                 for (face in faces) {
-                                    Log.d(TAG, "Face bounds: ${face.boundingBox}")
-
-                                    val vm = FaceViewModel(face)
+                                    val transformedRect = transformBoundingBox(face.boundingBox, imageProxy)
+                                    val vm = FaceViewModel(face).apply {
+                                        boundingRect.set(transformedRect)
+                                    }
                                     val drawable = FaceDrawable(vm)
                                     viewBinding?.viewFinder?.overlay?.add(drawable)
-
                                 }
-
                             }
                         }
                         .addOnFailureListener { e ->
@@ -153,7 +159,6 @@ class MainActivity : AppCompatActivity() {
                     imageProxy.close()
                 }
             }
-
 
             photoTake = ImageCapture.Builder().build()
             val recorder = Recorder.Builder()
@@ -208,17 +213,11 @@ class MainActivity : AppCompatActivity() {
                         viewModel.photoUris.add(0, uri)
                         photosAdapter.notifyItemInserted(0)
                     }
-
-
                 }
-
-
-
-
             }
         )
-
     }
+
     private fun captureVideo() {
         val videoCapture = this.videoCapture ?: return
 
@@ -239,7 +238,6 @@ class MainActivity : AppCompatActivity() {
                 put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/Camera_X-Video")
             }
         }
-
         val mediaStoreOutputOptions = MediaStoreOutputOptions
             .Builder(contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             .setContentValues(contentValues)
@@ -287,6 +285,7 @@ class MainActivity : AppCompatActivity() {
             }
 
     }
+
     private fun switchCamera() {
         currentCameraSelector = if (currentCameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
             CameraSelector.DEFAULT_FRONT_CAMERA
@@ -371,11 +370,40 @@ class MainActivity : AppCompatActivity() {
             photosAdapter.notifyDataSetChanged()
         }
     }
+    private fun transformBoundingBox(box: Rect, imageProxy: ImageProxy): Rect {
+        val previewWidth = viewBinding?.viewFinder?.width?.toFloat() ?: 0f
+        val previewHeight = viewBinding?.viewFinder?.height?.toFloat() ?: 0f
+        val imageWidth = if (imageProxy.imageInfo.rotationDegrees % 180 == 0) {
+            imageProxy.width.toFloat()
+        } else {
+            imageProxy.height.toFloat()
+        }
 
+        val imageHeight = if (imageProxy.imageInfo.rotationDegrees % 180 == 0) {
+            imageProxy.height.toFloat()
+        } else {
+            imageProxy.width.toFloat()
+        }
+        val scaleX = previewWidth / imageWidth
+        val scaleY = previewHeight / imageHeight
+        val scale = min(scaleX, scaleY)
+        val offsetX = (previewWidth - imageWidth * scale) / 2
+        val offsetY = (previewHeight - imageHeight * scale) / 2
+        val scaledLeft = box.left * scale + offsetX
+        val scaledTop = box.top * scale + offsetY
+        val scaledRight = box.right * scale + offsetX
+        val scaledBottom = box.bottom * scale + offsetY
 
-
-
-
-
+        return if (currentCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
+            Rect(
+                (previewWidth - scaledRight).toInt(),
+                scaledTop.toInt(),
+                (previewWidth - scaledLeft).toInt(),
+                scaledBottom.toInt()
+            )
+        } else {
+            Rect(scaledLeft.toInt(), scaledTop.toInt(), scaledRight.toInt(), scaledBottom.toInt())
+        }
+    }
 
 }

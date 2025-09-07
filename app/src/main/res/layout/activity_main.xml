@@ -14,7 +14,8 @@
   <androidx.camera.view.PreviewView
       android:id="@+id/viewFinder"
       android:layout_width="match_parent"
-      android:layout_height="match_parent" />
+      android:layout_height="match_parent"
+      app:scaleType="fitCenter"/>
 
   <LinearLayout
       android:id="@+id/bottom_panel"
