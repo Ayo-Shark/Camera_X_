@@ -22,7 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.Camera_X">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>

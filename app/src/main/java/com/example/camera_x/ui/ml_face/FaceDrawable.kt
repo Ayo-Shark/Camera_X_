@@ -1,4 +1,4 @@
-package com.example.camera_x
+package com.example.camera_x.ui.ml_face
 
 import android.graphics.Canvas
 import android.graphics.Color

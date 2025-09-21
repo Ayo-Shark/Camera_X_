@@ -1,16 +1,16 @@
-package com.example.camera_x
+package com.example.camera_x.ui.main
 
 import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.graphics.Matrix
 import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -31,11 +31,14 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
-import androidx.camera.view.TransformExperimental
 
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.recyclerview.widget.GridLayoutManager
+import com.bumptech.glide.Glide
+import com.example.camera_x.ui.ml_face.FaceDrawable
+import com.example.camera_x.ui.ml_face.FaceViewModel
+import com.example.camera_x.R
 import com.example.camera_x.databinding.ActivityMainBinding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -74,6 +77,9 @@ class MainActivity : AppCompatActivity() {
         viewBinding?.recyclerPhotos?.layoutManager = GridLayoutManager(this, 2)
         val bottomSheetBehavior = BottomSheetBehavior.from(viewBinding?.bottomSheet!!)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        photosAdapter.onItemClick = { uri ->
+            showFullPhoto(uri)
+        }
 
         viewBinding?.openGallery?.setOnClickListener {
             if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
@@ -271,7 +277,8 @@ class MainActivity : AppCompatActivity() {
                         } else {
                              recording?.close()
                             recording = null
-                            Log.e(TAG, "Video capture ends with error: " +
+                            Log.e(
+                                TAG, "Video capture ends with error: " +
                                     "${recordEvent.error}")
                         }
                         viewBinding?.takeVideo?.apply {
@@ -370,6 +377,31 @@ class MainActivity : AppCompatActivity() {
             photosAdapter.notifyDataSetChanged()
         }
     }
+    private fun loadExistingVideo() {
+        val projectionVideo = arrayOf(MediaStore.Video.Media._ID, MediaStore.Video.Media.DATE_TAKEN)
+        val sortOrderVideo = "${MediaStore.Video.Media.DATE_TAKEN} DESC"
+        contentResolver.query(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            projectionVideo,
+            null,
+            null,
+            sortOrderVideo
+        )?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+            viewModel.photoUris.clear()
+            while (cursor.moveToNext()) {
+                val id = cursor.getLong(idColumn)
+                val contentUri = ContentUris.withAppendedId(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    id
+                )
+                viewModel.videoUris.add(contentUri)
+            }
+            photosAdapter.notifyDataSetChanged()
+        }
+
+
+    }
     private fun transformBoundingBox(box: Rect, imageProxy: ImageProxy): Rect {
         val previewWidth = viewBinding?.viewFinder?.width?.toFloat() ?: 0f
         val previewHeight = viewBinding?.viewFinder?.height?.toFloat() ?: 0f
@@ -405,5 +437,16 @@ class MainActivity : AppCompatActivity() {
             Rect(scaledLeft.toInt(), scaledTop.toInt(), scaledRight.toInt(), scaledBottom.toInt())
         }
     }
+    private fun showFullPhoto(uri: Uri) {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.photo, null)
+        val imageView = view.findViewById<ImageView>(R.id.fullPhotoView)
 
+        Glide.with(this)
+            .load(uri)
+            .into(imageView)
+
+        dialog.setContentView(view)
+        dialog.show()
+    }
 }
