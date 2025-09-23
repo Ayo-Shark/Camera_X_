@@ -65,8 +65,6 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var photosAdapter: PhotosAdapter
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
@@ -77,6 +75,7 @@ class MainActivity : AppCompatActivity() {
         viewBinding?.recyclerPhotos?.layoutManager = GridLayoutManager(this, 2)
         val bottomSheetBehavior = BottomSheetBehavior.from(viewBinding?.bottomSheet!!)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        bottomSheetBehavior.peekHeight = 1
         photosAdapter.onItemClick = { uri ->
             showFullPhoto(uri)
         }
@@ -343,9 +342,11 @@ class MainActivity : AppCompatActivity() {
                     permissionGranted = false
             }
             if (!permissionGranted) {
+
                 Toast.makeText(baseContext,
                     "Permission request denied",
                     Toast.LENGTH_SHORT).show()
+
             } else {
                 startCamera()
             }
