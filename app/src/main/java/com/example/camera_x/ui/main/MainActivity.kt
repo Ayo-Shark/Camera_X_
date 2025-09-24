@@ -75,7 +75,6 @@ class MainActivity : AppCompatActivity() {
         viewBinding?.recyclerPhotos?.layoutManager = GridLayoutManager(this, 2)
         val bottomSheetBehavior = BottomSheetBehavior.from(viewBinding?.bottomSheet!!)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-        bottomSheetBehavior.peekHeight = 1
         photosAdapter.onItemClick = { uri ->
             showFullPhoto(uri)
         }
