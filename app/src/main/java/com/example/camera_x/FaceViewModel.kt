@@ -1,4 +1,4 @@
-package com.example.camera_x.ui.ml_face
+package com.example.camera_x
 
 import android.graphics.Rect
 import com.google.mlkit.vision.face.Face

@@ -1,4 +1,4 @@
-package com.example.camera_x.ui.main
+package com.example.camera_x
 
 import android.annotation.SuppressLint
 import android.content.ContentUris
@@ -36,9 +36,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.recyclerview.widget.GridLayoutManager
 import com.bumptech.glide.Glide
-import com.example.camera_x.ui.ml_face.FaceDrawable
-import com.example.camera_x.ui.ml_face.FaceViewModel
-import com.example.camera_x.R
 import com.example.camera_x.databinding.ActivityMainBinding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -95,7 +92,7 @@ class MainActivity : AppCompatActivity() {
 
         if (allPermissionsGranted()) {
             startCamera()
-            loadExistingPhotos()
+            loadPhotos()
         } else {
             requestPermissions()
         }
@@ -126,7 +123,7 @@ class MainActivity : AppCompatActivity() {
                 .build()
 
             val options = FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
                 .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
                 .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
                 .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
@@ -353,7 +350,7 @@ class MainActivity : AppCompatActivity() {
         }
 
     @SuppressLint("NotifyDataSetChanged")
-    private fun loadExistingPhotos() {
+    private fun loadPhotos() {
         val projection = arrayOf(MediaStore.Images.Media._ID, MediaStore.Images.Media.DATE_TAKEN)
         val sortOrder = "${MediaStore.Images.Media.DATE_TAKEN} DESC"
 
@@ -377,7 +374,7 @@ class MainActivity : AppCompatActivity() {
             photosAdapter.notifyDataSetChanged()
         }
     }
-    private fun loadExistingVideo() {
+    private fun loadVideo() {
         val projectionVideo = arrayOf(MediaStore.Video.Media._ID, MediaStore.Video.Media.DATE_TAKEN)
         val sortOrderVideo = "${MediaStore.Video.Media.DATE_TAKEN} DESC"
         contentResolver.query(

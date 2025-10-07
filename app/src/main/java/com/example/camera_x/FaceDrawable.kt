@@ -1,4 +1,4 @@
-package com.example.camera_x.ui.ml_face
+package com.example.camera_x
 
 import android.graphics.Canvas
 import android.graphics.Color
@@ -44,6 +44,7 @@ class FaceDrawable(private val faceViewModel: FaceViewModel) : Drawable() {
         paint.colorFilter = colorFilter
         textPaint.colorFilter = colorFilter
     }
+
 
     @Deprecated("Deprecated in Java")
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT

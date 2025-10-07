@@ -1,4 +1,4 @@
-package com.example.camera_x.ui.main
+package com.example.camera_x
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel

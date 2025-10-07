@@ -1,4 +1,4 @@
-package com.example.camera_x.ui.main
+package com.example.camera_x
 
 import android.net.Uri
 import android.view.LayoutInflater
@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.camera_x.R
 
 class PhotosAdapter(private val uris: List<Uri>) :
     RecyclerView.Adapter<PhotosAdapter.PhotoViewHolder>() {
@@ -33,6 +32,7 @@ class PhotosAdapter(private val uris: List<Uri>) :
             onItemClick?.invoke(uris[position])
         }
     }
+
 
     override fun getItemCount() = uris.size
 }
