@@ -3,13 +3,19 @@ package com.example.camera_x
 import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.ContentValues
+import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Rect
+import android.hardware.display.DisplayManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.Display
+import android.view.Surface
+import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,15 +37,14 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
-
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
+import androidx.core.graphics.rotationMatrix
 import androidx.recyclerview.widget.GridLayoutManager
 import com.bumptech.glide.Glide
 import com.example.camera_x.databinding.ActivityMainBinding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
-
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
@@ -69,7 +74,7 @@ class MainActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         photosAdapter = PhotosAdapter(viewModel.photoUris)
         viewBinding?.recyclerPhotos?.adapter = photosAdapter
-        viewBinding?.recyclerPhotos?.layoutManager = GridLayoutManager(this, 2)
+        viewBinding?.recyclerPhotos?.layoutManager = GridLayoutManager(this, 4)
         val bottomSheetBehavior = BottomSheetBehavior.from(viewBinding?.bottomSheet!!)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         photosAdapter.onItemClick = { uri ->
@@ -104,22 +109,38 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        startCamera()
+    }
+
+
     @SuppressLint("RestrictedApi")
     @OptIn(ExperimentalGetImage::class)
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
+        val rotation = when ((getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+            .defaultDisplay.rotation) {
+            Surface.ROTATION_0 -> Surface.ROTATION_0
+            Surface.ROTATION_90 -> Surface.ROTATION_90
+            Surface.ROTATION_180 -> Surface.ROTATION_180
+            Surface.ROTATION_270 -> Surface.ROTATION_270
+            else -> Surface.ROTATION_0
+        }
         cameraProviderFuture.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
             val preview = Preview.Builder()
+                .setTargetRotation(rotation)
                 .build()
                 .also {
                     it.setSurfaceProvider(viewBinding?.viewFinder?.surfaceProvider)
                 }
             val imageAnalysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setTargetRotation(rotation)
                 .build()
 
             val options = FaceDetectorOptions.Builder()
@@ -161,7 +182,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            photoTake = ImageCapture.Builder().build()
+            photoTake = ImageCapture.Builder()
+                .setTargetRotation(rotation)
+                .build()
             val recorder = Recorder.Builder()
                 .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
                 .build()
@@ -349,6 +372,7 @@ class MainActivity : AppCompatActivity() {
 
         }
 
+
     @SuppressLint("NotifyDataSetChanged")
     private fun loadPhotos() {
         val projection = arrayOf(MediaStore.Images.Media._ID, MediaStore.Images.Media.DATE_TAKEN)
@@ -369,7 +393,9 @@ class MainActivity : AppCompatActivity() {
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     id
                 )
+
                 viewModel.photoUris.add(contentUri)
+
             }
             photosAdapter.notifyDataSetChanged()
         }

@@ -23,7 +23,7 @@
         android:theme="@style/Base.Theme.Camera_X">
         <activity
             android:name=".MainActivity"
-            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|screenLayout"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
