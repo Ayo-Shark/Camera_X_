@@ -235,7 +235,7 @@ class MainActivity : AppCompatActivity() {
 
                     output.savedUri?.let { uri ->
                         viewModel.photoUris.add(0, uri)
-                        photosAdapter.notifyItemInserted(0)
+                        photosAdapter.notifyDataSetChanged()
                     }
                 }
             }
